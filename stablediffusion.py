@@ -1,4 +1,6 @@
 import base64
+import os
+import random
 import requests
 
 from io import BytesIO
@@ -170,11 +172,29 @@ req_generate = {
         "session_hash":session_hash
 }
 
+output_dir = "out/"
+saved_dir = "saved/"
+saved_filename_pattern = "generated_{}.png"
+saved_count = len(os.listdir(saved_dir))
+
 def json_to_string(j):
     vals = list(j.values())
     return "={},".join(j.keys()).format(*vals) + "={}".format(vals[-1])
 
+def display_saved_horse():
+    horse_num = random.randint(1,saved_count)
+    horse_file = saved_dir + saved_filename_pattern.format(horse_num)
+    if not(os.path.isfile(horse_file)):
+        print("Couldn't find horse "+horse_file)
+        return
+    im = Image.open(horse_file)
+    im.show()
+
 def diffuse_horse(s, stability):
+    if stability == 1:
+        display_saved_horse()
+        return
+
     s.post(host+path, json = req_init)
     resp_generate = s.post(host+path, json = req_generate)
     resp_json = resp_generate.json()
@@ -201,14 +221,5 @@ while True:
         continue
     print("Diffusing horse at stability level {}".format(stability))
     diffuse_horse(sess, stability)
-    
 
-
-
-
-###################### TODOS ###################################
-
-# TODO display image from response
-# TODO take in parameter for stability and figure out how to incorporate into prompt
-# TODO figure out if I can re-use/img2img existing horses 
-# TODO some wordlist 
+# TODO figure out how to incorporate stability into prompt - img2img existing horses with wordlist?
