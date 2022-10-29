@@ -174,19 +174,34 @@ def json_to_string(j):
     vals = list(j.values())
     return "={},".join(j.keys()).format(*vals) + "={}".format(vals[-1])
 
-s = requests.Session()
+def diffuse_horse(s, stability):
+    s.post(host+path, json = req_init)
+    resp_generate = s.post(host+path, json = req_generate)
+    resp_json = resp_generate.json()
+    generated_file_path = resp_json['data'][0][0]['name']
 
-resp_init = s.post(host+path, json = req_init)
-resp_generate = s.post(host+path, json = req_generate)
-resp_json = resp_generate.json()
-generated_file_path = resp_json['data'][0][0]['name']
+    resp_img = s.get(host+"/file="+generated_file_path)
+    im = Image.open(BytesIO(resp_img.content))
+    im.show()
 
-resp_img = s.get(host+"/file="+generated_file_path)
-im = Image.open(BytesIO(resp_img.content))
-im.show()
+    with open("out/"+generated_file_path.split("/")[-1], 'wb') as f:
+        f.write(resp_img.content)
 
-with open("out/"+generated_file_path.split("/")[-1], 'wb') as f:
-    f.write(resp_img.content)
+sess = requests.Session()
+while True:
+    user_input = input("Choose stability level (1-10): ")
+    if user_input == "quit":
+        break
+    if not(user_input.isdigit()):
+         print("Invalid stability level")
+         continue
+    stability = int(user_input)
+    if stability < 1 or stability > 10:
+        print("Invalid stability level")
+        continue
+    print("Diffusing horse at stability level {}".format(stability))
+    diffuse_horse(sess, stability)
+    
 
 
 
