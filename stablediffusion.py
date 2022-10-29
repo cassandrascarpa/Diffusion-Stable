@@ -179,6 +179,9 @@ resp_img = s.get(host+"/file="+generated_file_path)
 im = Image.open(BytesIO(resp_img.content))
 im.show()
 
+with open("out/"+generated_file_path.split("/")[-1], 'wb') as f:
+    f.write(resp_img.content)
+
 
 
 
