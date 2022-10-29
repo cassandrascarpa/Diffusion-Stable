@@ -2,6 +2,7 @@ import base64
 import os
 import random
 import requests
+import string
 
 from io import BytesIO
 from PIL import Image
@@ -39,7 +40,7 @@ fn_index_init = 24
 fn_index_generate = 38
 fn_index_update = 23
 
-session_hash = "9k9ieh5ip3j"
+session_hash = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(11))
 
 with open(base_image, "rb") as f:
     base_image_b64 = base64.b64encode(f.read()).decode('utf-8')
@@ -220,6 +221,9 @@ while True:
         print("Invalid stability level")
         continue
     print("Diffusing horse at stability level {}".format(stability))
-    diffuse_horse(sess, stability)
+    try:
+        diffuse_horse(sess, stability)
+    except:
+        print("An error occurred, retrying...")
 
 # TODO figure out how to incorporate stability into prompt - img2img existing horses with wordlist?
