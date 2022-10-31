@@ -7,12 +7,16 @@ import string
 from io import BytesIO
 from PIL import Image
 
+# ---------- SETTINGS  ----------
+
 host = 'http://gpu1.local:9000'
 path = '/api/predict/'
 
-false = False
-true = True
-null = None
+save_generated_images = True
+output_dir = "out/"
+# Load existing images
+saved_dir = "saved/"
+saved_filename_pattern = "generated_{}.png"
 
 base_image = "horse.jpeg"
 mask_image = "mask.png"
@@ -20,6 +24,7 @@ mask_image = "mask.png"
 prompt = "medium-size short robotic (((((horse))))) standing on four legs facing towards the camera, futuristic, steampunk, (((cyberpunk))), sci-fi, lights"
 negative_prompt = "off-center, long, (((tall))), huge, hiding, obscured, off-screen, outdoors, window, tree, city, background, human, person, rider, toy, abstract, platform, jumping, fence, gate"
 
+mode_inpaint = 1
 method = "Heun"
 sampling_steps = 30
 cfg_scale = 23
@@ -27,6 +32,7 @@ denoising_strength = 0.9
 mask_blur = 30
 height = 512
 width = 512
+inpaint_full_res = False
 padding = 32
 mask_type = "Draw mask"
 masked_content = "fill"
@@ -34,11 +40,21 @@ resize = "Just resize"
 inpaint = "Inpaint masked"
 batch_count = 1
 batch_size = 1
+style1 = "None"
+style2 = "None"
 seed = -1
+
+# ---------- VARS  ----------
 
 fn_index_init = 24
 fn_index_generate = 38
 fn_index_update = 23
+
+false = False
+true = True
+null = None
+
+saved_count = len(os.listdir(saved_dir))
 
 session_hash = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(11))
 
@@ -57,10 +73,11 @@ req_init = {"fn_index":fn_index_init,"data":[],"session_hash":session_hash}
 req_generate = {
     "fn_index":fn_index_generate,
     "data":[
-        1,
+        mode_inpaint,
         prompt,
         negative_prompt,
-        "None","None",null,
+        style1, style2,
+        null,
         image_data,
         null,null,
         mask_type,
@@ -73,16 +90,17 @@ req_generate = {
         1,
         cfg_scale,
         denoising_strength,
-        -1,
+        seed,
         -1,
         0,0,0,
         false,
         width,
         height,
         resize,
-        false,
-        32,
+        inpaint_full_res,
+        padding,
         inpaint,
+        # Abandon all hope, ye who enter here
         "",
         "",
         "None",
@@ -173,10 +191,7 @@ req_generate = {
         "session_hash":session_hash
 }
 
-output_dir = "out/"
-saved_dir = "saved/"
-saved_filename_pattern = "generated_{}.png"
-saved_count = len(os.listdir(saved_dir))
+# ---------- HORSE CODE  ----------
 
 def json_to_string(j):
     vals = list(j.values())
@@ -226,4 +241,17 @@ while True:
     except:
         print("An error occurred, retrying...")
 
-# TODO figure out how to incorporate stability into prompt - img2img existing horses with wordlist?
+# stability ideas!!!!!!!!!!!
+
+# level 0 = live generate horse with random partial mask
+# level 1 = pre-generated horse with random partial mask
+# level 2 = live generate horse with horse mask
+# level 3 - pre-generated horse with horse mask
+# level 4 = live generate horse with full mask
+# level 5 - pre-generated horse with full mask
+
+# level 0,1 - very high probability of weird wordlist in positive/negative prompts
+# level 2,3 - medium probabiliby of weird wordlsit in positive/negative prompts
+# level 4,5 - very low probabiliby of weird wordlist in positive/negative prompts
+
+# Animator? Other scripts?
