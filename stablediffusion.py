@@ -3,9 +3,12 @@ import os
 import random
 import requests
 import string
+import tkinter
+import threading
+import time
 
 from io import BytesIO
-from PIL import Image
+from PIL import Image, ImageTk
 
 # ---------- SETTINGS  ----------
 
@@ -21,6 +24,12 @@ saved_filename_pattern = "generated_{}.png"
 base_image = "horse.jpeg"
 mask_image = "mask.png"
 
+# TODO make these the same without taking forever to generate
+height = 512
+width = 512
+screenwidth = 1920
+screenheight = 1800
+
 prompt = "medium-size short robotic (((((horse))))) standing on four legs facing towards the camera, futuristic, steampunk, (((cyberpunk))), sci-fi, lights"
 negative_prompt = "off-center, long, (((tall))), huge, hiding, obscured, off-screen, outdoors, window, tree, city, background, human, person, rider, toy, abstract, platform, jumping, fence, gate"
 
@@ -30,8 +39,6 @@ sampling_steps = 30
 cfg_scale = 23
 denoising_strength = 0.9
 mask_blur = 30
-height = 512
-width = 512
 inpaint_full_res = False
 padding = 32
 mask_type = "Draw mask"
@@ -46,9 +53,8 @@ seed = -1
 
 # ---------- VARS  ----------
 
-fn_index_init = 24
-fn_index_generate = 38
-fn_index_update = 23
+fn_index_init = 59
+fn_index_generate = 75
 
 false = False
 true = True
@@ -191,6 +197,19 @@ req_generate = {
         "session_hash":session_hash
 }
 
+# ---------- GUI ----------
+
+def showFullScreen(img):
+    win = tkinter.Tk()
+    win.geometry("%dx%d+0+0" % (screenwidth, screenheight))   
+    win.wm_attributes('-fullscreen', 'True')
+    win.bind("<Escape>", lambda event:win.destroy())
+    canvas = tkinter.Canvas(win,width=screenwidth,height=screenheight)
+    canvas.pack()
+    canvas.configure(background='black')
+    canvas.create_image(screenwidth/2,screenheight/2,image=ImageTk.PhotoImage(img))
+    win.mainloop()
+
 # ---------- HORSE CODE  ----------
 
 def json_to_string(j):
@@ -204,7 +223,7 @@ def display_saved_horse():
         print("Couldn't find horse "+horse_file)
         return
     im = Image.open(horse_file)
-    im.show()
+    showFullScreen(im)
 
 def diffuse_horse(s, stability):
     if stability == 1:
@@ -218,7 +237,7 @@ def diffuse_horse(s, stability):
 
     resp_img = s.get(host+"/file="+generated_file_path)
     im = Image.open(BytesIO(resp_img.content))
-    im.show()
+    showFullScreen(im)
 
     with open("out/"+generated_file_path.split("/")[-1], 'wb') as f:
         f.write(resp_img.content)
