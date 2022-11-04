@@ -97,16 +97,14 @@ def update_info():
 def display_saved_horses():
     global stability
     while True:
-        stability_dir = "/level_{}/".format(stability)
+        stability_dir = "level_{}/".format(stability)
         dir_contents = glob.glob(saved_dir + stability_dir + "*.png")
         horse_file = random.choice(dir_contents)
         if not(os.path.isfile(horse_file)):
-            print("Couldn't find horse "+horse_file)
             continue
         im = Image.open(horse_file)
         update_image(im)
         time.sleep(tth)
-        break
 
 def generate_request(stability):
     req = {
@@ -231,7 +229,7 @@ def main():
     if live_generation:
         t2 = threading.Thread(target=diffuser)
     else:
-        t2 = threading.Thread(display_saved_horses)
+        t2 = threading.Thread(target=display_saved_horses)
 
     t1.setDaemon(True)
     t1.start()
@@ -246,4 +244,3 @@ if __name__ == "__main__":
 # ---------- TODOS are back and they're better than ever -------------
 # Set stability level with hardware
 # Make sure everything works on the pi
-# Backups: have another sd instance to fall back on, sets of saved images, etc
