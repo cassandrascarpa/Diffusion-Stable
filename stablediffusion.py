@@ -28,8 +28,8 @@ stable_wordlist = "stable_wordlist.txt"
 unstable_wordlist = "unstable_wordlist.txt"
 height = 896
 width = 960
-screenwidth = 1920
-screenheight = 1088
+screenwidth = width #1920
+screenheight = height #1088
 
 prompt = "medium-size short robotic (((((horse))))) standing on four legs facing towards the camera, futuristic, steampunk, (((cyberpunk))), sci-fi, lights"
 negative_prompt = "off-center, long, (((tall))), huge, hiding, obscured, off-screen, outdoors, window, tree, city, background, human, person, rider, toy, abstract, platform, jumping, fence, gate"
@@ -52,10 +52,17 @@ style1 = "None"
 style2 = "None"
 seed = -1
 
+fullscreen = False
+tth = 3 # time to horse
+
 # ---------- HORSE CODE  ----------
 img = None
 canvas = None
+label = None
 horse_container = None
+horse_info = None
+stability = 10
+generation_time = tth
 
 with open(base_image, "rb") as f:
     base_image_b64 = base64.b64encode(f.read()).decode('utf-8')
@@ -75,6 +82,11 @@ def update_image(newhorse):
    im_large = newhorse.resize((screenwidth, screenheight), resample=Image.BOX)
    img = ImageTk.PhotoImage(im_large)
    canvas.itemconfig(horse_container,image=img)
+
+def update_info():
+    global stability
+    global generation_time
+    canvas.itemconfig(horse_info,text="Stability: {}/10\nGeneration time: {}s".format(stability, generation_time))
 
 def display_saved_horse(saved_count):
     horse_num = random.randint(1,saved_count)
@@ -136,20 +148,32 @@ def diffuse_horse(s, stability):
     resp_img_content = base64.b64decode(resp_img)
 
     im = Image.open(BytesIO(resp_img_content))
-    im.show()
     update_image(im)
 
     generated_file_path = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(11)) + ".png"
     with open("out/"+generated_file_path.split("/")[-1], 'wb') as f:
         f.write(resp_img_content)
 
-def repl():
+def diffuser():
+    global generation_time
     sess = requests.Session()
+    last_horse_time = time.time()
+    while True:
+        try:
+            diffuse_horse(sess, stability)
+            now = time.time()
+            generation_time = math.ceil(now - last_horse_time)
+            last_horse_time = now
+            update_info()
+        except:
+            print("An error occurred, retrying...")
+        time.sleep(tth)
+
+def repl():
+    global stability
     saved_count = len(os.listdir(saved_dir))
     while True:
         user_input = input("Choose stability level (1-10): ")
-        if user_input == "quit":
-            break
         if user_input == "saved":
             display_saved_horse(saved_count)
             continue
@@ -160,20 +184,17 @@ def repl():
         if stability < 0 or stability > 10:
             print("Invalid stability level")
             continue
-        print("Diffusing horse at stability level {}".format(stability))
-        try:
-            diffuse_horse(sess, stability)
-        except:
-            print("An error occurred, try again...")
-        time.sleep(1)
+        update_info()
 
 def main():
     global img
     global canvas
     global horse_container
+    global horse_info
     win = tkinter.Tk()
-    win.geometry("%dx%d+0+0" % (screenwidth, screenheight))   
-    win.wm_attributes('-fullscreen', 'True')
+    win.geometry("%dx%d+0+0" % (screenwidth, screenheight))
+    if fullscreen:   
+        win.wm_attributes('-fullscreen', 'True')
     win.bind("<Escape>", lambda event:win.destroy())
     canvas = tkinter.Canvas(win,width=screenwidth,height=screenheight)
     canvas.pack()
@@ -182,9 +203,16 @@ def main():
     im_large = initial.resize((screenwidth, screenheight), resample=Image.BOX)
     img = ImageTk.PhotoImage(im_large)
     horse_container = canvas.create_image(screenwidth/2,screenheight/2,image=img)
+    horse_info = canvas.create_text(10,30, text="", fill="white", font=('Helvetica 15 bold'), anchor = 'w')
+    update_info()
 
     t1 = threading.Thread(target=repl)
+    t1.setDaemon(True)
     t1.start()
+
+    t2 = threading.Thread(target=diffuser)
+    t2.setDaemon(True)
+    t2.start()
     
     win.mainloop()
 
@@ -192,9 +220,7 @@ if __name__ == "__main__":
     main()
 
 # ---------- TODOS are back and they're better than ever -------------
-# Border around image showing stability level, time estimates
-# Generate a horse every x seconds at current stability level
-# GPIO stuff
+# Set stability level with hardware
 # Make sure everything works on the pi
 # Backups: have another sd instance to fall back on, sets of saved images, etc
 # Backup for stability: no interaction, just have a random level generated each time
