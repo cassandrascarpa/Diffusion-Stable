@@ -120,10 +120,12 @@ def denoising_strength(stability):
     elif stability == 9:
         return 0.2
     elif stability == 8:
-        return 0.3
+        return 0.28
     elif stability > 5:
+        return 0.35
+    elif stability > 3:
         return 0.38
-    elif stability > 2:
+    elif stability > 1:
         return 0.42
     elif stability > 0:
         return 0.45
