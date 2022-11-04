@@ -2,12 +2,10 @@
 
 Horse diffuser
 
-![Example horse 1](saved/generated_134.png)
+From stable to unstable
 
-![Example horse 2](saved/generated_123.png)
+![Example horse 1](saved/bot_horse.png)
 
-![Example horse 3](saved/generated_221.png)
+![Example horse 2](saved/meat_horse.png)
 
-![Example horse 4](saved/generated_80.png)
-
-![Example horse 5](saved/generated_167.png)
+![Example horse 3](saved/wtf.png)
