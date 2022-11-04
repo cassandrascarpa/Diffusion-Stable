@@ -1,4 +1,5 @@
 import base64
+import glob
 import json
 import math
 import os
@@ -14,8 +15,16 @@ from PIL import Image, ImageTk
 
 # ---------- SETTINGS  ----------
 
-host = 'http://gpu1.local:7860'
+host_primary = 'http://gpu1.local:7860'
+host_alt = 'http://192.168.1.166:7860'
+host = host_primary
+
 path = '/sdapi/v1/img2img'
+
+live_generation = True
+interactive = True
+fullscreen = False
+tth = 3 # time to horse
 
 save_generated_images = True
 output_dir = "out/"
@@ -52,9 +61,6 @@ style1 = "None"
 style2 = "None"
 seed = -1
 
-fullscreen = False
-tth = 3 # time to horse
-
 # ---------- HORSE CODE  ----------
 img = None
 canvas = None
@@ -86,16 +92,21 @@ def update_image(newhorse):
 def update_info():
     global stability
     global generation_time
-    canvas.itemconfig(horse_info,text="Stability: {}/10\nGeneration time: {}s".format(stability, generation_time))
+    canvas.itemconfig(horse_info,text="Generation time: {}s\nStability: {}/10".format(generation_time, stability))
 
-def display_saved_horse(saved_count):
-    horse_num = random.randint(1,saved_count)
-    horse_file = saved_dir + saved_filename_pattern.format(horse_num)
-    if not(os.path.isfile(horse_file)):
-        print("Couldn't find horse "+horse_file)
-        return
-    im = Image.open(horse_file)
-    update_image(im)
+def display_saved_horses():
+    global stability
+    while True:
+        stability_dir = "/level_{}/".format(stability)
+        dir_contents = glob.glob(saved_dir + stability_dir + "*.png")
+        horse_file = random.choice(dir_contents)
+        if not(os.path.isfile(horse_file)):
+            print("Couldn't find horse "+horse_file)
+            continue
+        im = Image.open(horse_file)
+        update_image(im)
+        time.sleep(tth)
+        break
 
 def generate_request(stability):
     req = {
@@ -150,9 +161,10 @@ def diffuse_horse(s, stability):
     im = Image.open(BytesIO(resp_img_content))
     update_image(im)
 
-    generated_file_path = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(11)) + ".png"
-    with open("out/"+generated_file_path.split("/")[-1], 'wb') as f:
-        f.write(resp_img_content)
+    if save_generated_images:
+        generated_file_path = "level_{}/".format(stability) + ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(8)) + ".png"
+        with open("out/"+generated_file_path, 'wb') as f:
+            f.write(resp_img_content)
 
 def diffuser():
     global generation_time
@@ -169,14 +181,18 @@ def diffuser():
             print("An error occurred, retrying...")
         time.sleep(tth)
 
+def destabilizer():
+    global generation_time
+    global stability
+    while True:
+        stability = random.randint(0,10)
+        update_info()
+        time.sleep(generation_time + 2*tth)
+
 def repl():
     global stability
-    saved_count = len(os.listdir(saved_dir))
     while True:
-        user_input = input("Choose stability level (1-10): ")
-        if user_input == "saved":
-            display_saved_horse(saved_count)
-            continue
+        user_input = input("Choose stability level (0-10): ")
         if not(user_input.isdigit()):
             print("Invalid stability level")
             continue
@@ -206,11 +222,19 @@ def main():
     horse_info = canvas.create_text(10,30, text="", fill="white", font=('Helvetica 15 bold'), anchor = 'w')
     update_info()
 
-    t1 = threading.Thread(target=repl)
+    if interactive:
+        t1 = threading.Thread(target=repl)
+        
+    else:
+        t1 = threading.Thread(target=destabilizer)
+
+    if live_generation:
+        t2 = threading.Thread(target=diffuser)
+    else:
+        t2 = threading.Thread(display_saved_horses)
+
     t1.setDaemon(True)
     t1.start()
-
-    t2 = threading.Thread(target=diffuser)
     t2.setDaemon(True)
     t2.start()
     
@@ -223,4 +247,3 @@ if __name__ == "__main__":
 # Set stability level with hardware
 # Make sure everything works on the pi
 # Backups: have another sd instance to fall back on, sets of saved images, etc
-# Backup for stability: no interaction, just have a random level generated each time
