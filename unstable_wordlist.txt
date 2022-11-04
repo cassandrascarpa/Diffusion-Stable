@@ -27,6 +27,7 @@ evil
 experiment
 frankenstein
 frightening
+furry
 gothic
 gross
 grotesque
@@ -59,10 +60,13 @@ nameless
 nightmarish
 obscene
 odd
+oozing
 peculiar
 perverse
 pornographic
 preternatural
+radioactive
+radioactive
 repulsive
 revolting
 scary
@@ -76,6 +80,7 @@ spider
 spiked
 spooky
 squid
+sticky
 strange
 tentacled
 too many eyes

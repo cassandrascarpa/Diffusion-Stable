@@ -5,9 +5,9 @@ import os
 import random
 import requests
 import string
-import tkinter
 import threading
 import time
+import tkinter
 
 from io import BytesIO
 from PIL import Image, ImageTk
@@ -29,7 +29,7 @@ unstable_wordlist = "unstable_wordlist.txt"
 height = 896
 width = 960
 screenwidth = 1920
-screenheight = 1792
+screenheight = 1088
 
 prompt = "medium-size short robotic (((((horse))))) standing on four legs facing towards the camera, futuristic, steampunk, (((cyberpunk))), sci-fi, lights"
 negative_prompt = "off-center, long, (((tall))), huge, hiding, obscured, off-screen, outdoors, window, tree, city, background, human, person, rider, toy, abstract, platform, jumping, fence, gate"
@@ -52,20 +52,10 @@ style1 = "None"
 style2 = "None"
 seed = -1
 
-# ---------- GUI ----------
-
-def showFullScreen(img):
-    win = tkinter.Tk()
-    win.geometry("%dx%d+0+0" % (screenwidth, screenheight))   
-    win.wm_attributes('-fullscreen', 'True')
-    win.bind("<Escape>", lambda event:win.destroy())
-    canvas = tkinter.Canvas(win,width=screenwidth,height=screenheight)
-    canvas.pack()
-    canvas.configure(background='black')
-    canvas.create_image(screenwidth/2,screenheight/2,image=ImageTk.PhotoImage(img))
-    win.mainloop()
-
 # ---------- HORSE CODE  ----------
+img = None
+canvas = None
+horse_container = None
 
 with open(base_image, "rb") as f:
     base_image_b64 = base64.b64encode(f.read()).decode('utf-8')
@@ -80,15 +70,20 @@ def json_to_string(j):
     vals = list(j.values())
     return "={},".join(j.keys()).format(*vals) + "={}".format(vals[-1])
 
-def display_saved_horse():
+def update_image(newhorse):
+   global img
+   im_large = newhorse.resize((screenwidth, screenheight), resample=Image.BOX)
+   img = ImageTk.PhotoImage(im_large)
+   canvas.itemconfig(horse_container,image=img)
+
+def display_saved_horse(saved_count):
     horse_num = random.randint(1,saved_count)
     horse_file = saved_dir + saved_filename_pattern.format(horse_num)
     if not(os.path.isfile(horse_file)):
         print("Couldn't find horse "+horse_file)
         return
     im = Image.open(horse_file)
-    im.show()
-    #showFullScreen(im)
+    update_image(im)
 
 def generate_request(stability):
     req = {
@@ -107,8 +102,10 @@ def generate_request(stability):
 
 def generate_prompt(stability):
     prompt = []
-    num_stable_words = math.ceil(stability/2)
+    num_stable_words = math.ceil(stability/2) + 1
     num_unstable_words = math.ceil((10-stability)/2)
+    if stability < 4:
+        num_unstable_words += 1
     for _ in range(num_stable_words):
         prompt.append(random.choice(stable_words))
     for _ in range(num_unstable_words):
@@ -119,19 +116,17 @@ def denoising_strength(stability):
     if stability == 10:
         return 0
     elif stability == 9:
-        return 0.1
-    elif stability == 8:
         return 0.2
-    elif stability == 7:
+    elif stability == 8:
         return 0.3
     elif stability > 5:
-        return 0.35
-    elif stability > 2:
         return 0.38
-    elif stability < 3 and stability > 0:
-        return 0.4
-    else:
+    elif stability > 2:
+        return 0.42
+    elif stability > 0:
         return 0.45
+    else:
+        return 0.48
 
 def diffuse_horse(s, stability):
     req = generate_request(stability)
@@ -142,32 +137,64 @@ def diffuse_horse(s, stability):
 
     im = Image.open(BytesIO(resp_img_content))
     im.show()
-    #im_large = im.resize((screenwidth, screenheight), resample=Image.BOX)
-    #im_large.show()
-    #showFullScreen(im)
+    update_image(im)
 
     generated_file_path = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(11)) + ".png"
     with open("out/"+generated_file_path.split("/")[-1], 'wb') as f:
         f.write(resp_img_content)
 
-sess = requests.Session()
-saved_count = len(os.listdir(saved_dir))
-while True:
-    user_input = input("Choose stability level (1-10): ")
-    if user_input == "quit":
-        break
-    if user_input == "saved":
-        display_saved_horse()
-        continue
-    if not(user_input.isdigit()):
-         print("Invalid stability level")
-         continue
-    stability = int(user_input)
-    if stability < 1 or stability > 10:
-        print("Invalid stability level")
-        continue
-    print("Diffusing horse at stability level {}".format(stability))
-    try:
-        diffuse_horse(sess, stability)
-    except:
-        print("An error occurred, retrying...")
+def repl():
+    sess = requests.Session()
+    saved_count = len(os.listdir(saved_dir))
+    while True:
+        user_input = input("Choose stability level (1-10): ")
+        if user_input == "quit":
+            break
+        if user_input == "saved":
+            display_saved_horse(saved_count)
+            continue
+        if not(user_input.isdigit()):
+            print("Invalid stability level")
+            continue
+        stability = int(user_input)
+        if stability < 0 or stability > 10:
+            print("Invalid stability level")
+            continue
+        print("Diffusing horse at stability level {}".format(stability))
+        try:
+            diffuse_horse(sess, stability)
+        except:
+            print("An error occurred, try again...")
+        time.sleep(1)
+
+def main():
+    global img
+    global canvas
+    global horse_container
+    win = tkinter.Tk()
+    win.geometry("%dx%d+0+0" % (screenwidth, screenheight))   
+    win.wm_attributes('-fullscreen', 'True')
+    win.bind("<Escape>", lambda event:win.destroy())
+    canvas = tkinter.Canvas(win,width=screenwidth,height=screenheight)
+    canvas.pack()
+    canvas.configure(background='black')
+    initial = Image.open(BytesIO(base64.b64decode(base_image_b64)))
+    im_large = initial.resize((screenwidth, screenheight), resample=Image.BOX)
+    img = ImageTk.PhotoImage(im_large)
+    horse_container = canvas.create_image(screenwidth/2,screenheight/2,image=img)
+
+    t1 = threading.Thread(target=repl)
+    t1.start()
+    
+    win.mainloop()
+
+if __name__ == "__main__":
+    main()
+
+# ---------- TODOS are back and they're better than ever -------------
+# Border around image showing stability level, time estimates
+# Generate a horse every x seconds at current stability level
+# GPIO stuff
+# Make sure everything works on the pi
+# Backups: have another sd instance to fall back on, sets of saved images, etc
+# Backup for stability: no interaction, just have a random level generated each time

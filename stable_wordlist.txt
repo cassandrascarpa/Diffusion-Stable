@@ -34,6 +34,7 @@ lights
 lights
 lights
 lights
+magical
 mechanical
 medieval
 metallic
@@ -58,4 +59,3 @@ utilitarian
 virtual
 wings
 wires
-zebra
