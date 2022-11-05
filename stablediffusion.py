@@ -21,9 +21,9 @@ host = host_primary
 
 path = '/sdapi/v1/img2img'
 
-live_generation = True
+live_generation = False
 interactive = True
-fullscreen = True
+fullscreen = False
 tth = 3 # time to horse
 
 save_generated_images = False
@@ -171,6 +171,14 @@ def destabilizer():
         update_info()
         time.sleep(generation_time + 2*tth)
 
+def increment_stability():
+    global stability
+    if stability == 0:
+        stability = 10
+    else:
+        stability -= 1
+    update_info()
+
 def repl():
     global stability
     while True:
@@ -194,6 +202,8 @@ def main():
     if fullscreen:   
         win.wm_attributes('-fullscreen', 'True')
     win.bind("<Escape>", lambda event:win.destroy())
+    if interactive:
+        win.bind("<Button-1>", lambda event: increment_stability())
     canvas = tkinter.Canvas(win,width=screenwidth,height=screenheight)
     canvas.pack()
     canvas.configure(background='black')
