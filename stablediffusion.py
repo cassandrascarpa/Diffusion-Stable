@@ -47,6 +47,7 @@ resize = "Just resize"
 
 # ---------- HORSE CODE  ----------
 img = None
+win = None
 canvas = None
 horse_container = None
 horse_info = None
@@ -173,13 +174,20 @@ def destabilizer():
         update_info()
         time.sleep(generation_time + 2*tth)
 
-def increment_stability():
+def stability_wheel():
     global stability
-    if stability == 0:
-        stability = 10
-    else:
-        stability -= 1
-    update_info()
+    global win
+    inc = (screenwidth / 10)
+    while True:
+        xpos = win.winfo_pointerx()
+        level = round(xpos / inc)
+        if level < 0:
+            level = 0
+        if level > 10:
+            level = 10
+        stability = level
+        update_info()
+        time.sleep(0.1)
 
 def repl():
     global stability
@@ -196,6 +204,7 @@ def repl():
 
 def main():
     global img
+    global win
     global canvas
     global horse_container
     global horse_info
@@ -204,8 +213,7 @@ def main():
     if fullscreen:   
         win.wm_attributes('-fullscreen', 'True')
     win.bind("<Escape>", lambda event:win.destroy())
-    if interactive:
-        win.bind("<Button-1>", lambda event: increment_stability())
+    win.config(cursor="none")
     canvas = tkinter.Canvas(win,width=screenwidth,height=screenheight)
     canvas.pack()
     canvas.configure(background='black')
@@ -217,7 +225,7 @@ def main():
     update_info()
 
     if interactive:
-        t1 = threading.Thread(target=repl)   
+        t1 = threading.Thread(target=stability_wheel)   
     else:
         t1 = threading.Thread(target=destabilizer)
 
