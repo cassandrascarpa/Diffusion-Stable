@@ -2,17 +2,22 @@ aberrant
 abomination
 absurd
 alien
+anatomical
 anomalous
 artificial
 bizarre
 body horror
+bondage
 bug
 chilling
+claws
+clown
 concerning
 confusing
 creepy
 cronenberg
 crude
+cursed
 dark
 deformed
 degenerate
@@ -25,9 +30,14 @@ enigmatic
 erotic
 evil
 experiment
+fangs
+fly
+fourth dimension
 frankenstein
 frightening
 furry
+ghost
+golem
 gothic
 gross
 grotesque
@@ -41,21 +51,28 @@ human
 human arms
 human face
 human legs
+hyperspace
+icy
 incomprehensible
 indecent
 insectoid
 irregular
 kafkaesque
 lewd
+liminal
+lizard
 lovecraftian
+lumpy
 lurking
 macabre
 mad science
+meat
 misshapen
 monstrous
 morbid
 mutilated
 mummy
+nails
 nameless
 nightmarish
 obscene
@@ -63,11 +80,16 @@ odd
 oozing
 peculiar
 perverse
+phantom
+portal
+posessed
 pornographic
 preternatural
 radioactive
+reptilian
 repulsive
 revolting
+scaly
 scary
 sexual
 shocking
@@ -81,6 +103,7 @@ spooky
 squid
 sticky
 strange
+surreal
 tentacled
 too many eyes
 too many legs
@@ -91,7 +114,11 @@ unnatural
 unstable
 unusual
 vampire
+veiny
 vile
+void
 vulgar
+warped
 weird
+werewolf
 zombie

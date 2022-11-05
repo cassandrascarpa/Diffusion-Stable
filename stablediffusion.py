@@ -26,7 +26,7 @@ interactive = True
 fullscreen = True
 tth = 3 # time to horse
 
-save_generated_images = True
+save_generated_images = False
 output_dir = "out/"
 saved_dir = "saved/"
 
@@ -36,8 +36,8 @@ unstable_wordlist = "unstable_wordlist.txt"
 
 height = 896
 width = 960
-screenwidth = width #1920
-screenheight = height #1088
+screenwidth = 1920
+screenheight = 1088
 
 method = "Heun"
 sampling_steps = 30
@@ -158,7 +158,8 @@ def diffuser():
             generation_time = math.ceil(now - last_horse_time)
             last_horse_time = now
             update_info()
-        except:
+        except Exception as e:
+            print(e)
             print("An error occurred, retrying...")
         time.sleep(tth)
 
