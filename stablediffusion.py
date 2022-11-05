@@ -21,9 +21,9 @@ host = host_primary
 
 path = '/sdapi/v1/img2img'
 
-live_generation = False
+live_generation = True
 interactive = True
-fullscreen = False
+fullscreen = True
 tth = 3 # time to horse
 
 save_generated_images = False
@@ -67,11 +67,13 @@ def update_image(newhorse):
    im_large = newhorse.resize((screenwidth, screenheight), resample=Image.BOX)
    img = ImageTk.PhotoImage(im_large)
    canvas.itemconfig(horse_container,image=img)
+   canvas.focus_set()
 
 def update_info():
     global stability
     global generation_time
     canvas.itemconfig(horse_info,text="Generation time: {}s\nStability: {}/10".format(generation_time, stability))
+    canvas.focus_set()
 
 def display_saved_horses():
     global stability
